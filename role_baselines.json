@@ -1,17 +1,17 @@
 {
   "Teller": {
-    "start_time": "08:00",
+    "start_time": "09:00",
     "end_time": "17:00",
     "max_daily_records": 50
   },
   "Customer Service": {
-    "start_time": "08:00",
+    "start_time": "09:00",
     "end_time": "17:00",
-    "max_daily_records": 100
+    "max_daily_records": 40
   },
   "Branch Manager": {
-    "start_time": "07:30",
-    "end_time": "19:00",
-    "max_daily_records": 150
+    "start_time": "09:00",
+    "end_time": "17:00",
+    "max_daily_records": 30
   }
 }

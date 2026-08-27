@@ -3,3 +3,9 @@ timestamp,user_id,role,records_accessed,action
 2026-08-25 21:15:00,USR002,Teller,20,customer_account_view
 2026-08-25 14:00:00,USR003,Customer Service,120,bulk_export
 2026-08-25 22:45:00,USR004,Branch Manager,200,system_audit_download
+2026-08-25 09:00:00,USR005,Teller,40,customer_account_view
+2026-08-25 03:30:00,USR006,Teller,80,bulk_export
+2026-08-25 11:45:00,USR007,Customer Service,50,customer_account_view
+2026-08-25 18:30:00,USR008,Customer Service,150,bulk_export
+2026-08-25 08:15:00,USR009,Branch Manager,100,operational_report
+2026-08-25 23:00:00,USR010,Branch Manager,50,system_audit_download

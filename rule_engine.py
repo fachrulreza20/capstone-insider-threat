@@ -2,7 +2,7 @@ import pandas as pd
 import json
 from datetime import datetime
 
-# Load baseline dan log audit
+# Load the baseline configuration and audit log data
 with open('role_baselines.json') as f:
     baselines = json.load(f)
 
@@ -13,7 +13,7 @@ def evaluate_log_entry(row):
     timestamp = datetime.strptime(row['timestamp'], '%Y-%m-%d %H:%M:%S')
     accessed_count = row['records_accessed']
     
-    # Ambil baseline sesuai role
+    # Get the baseline configuration for the user's role
     role_config = baselines.get(user_role)
     if not role_config:
         return "Unknown Role", "Low"
@@ -43,7 +43,7 @@ def evaluate_log_entry(row):
         
     return rules_triggered, risk_level
 
-# Jalankan evaluasi pada dataframe
+# Run the evaluation across the dataframe
 results = []
 for index, row in df.iterrows():
     triggered, risk = evaluate_log_entry(row)
@@ -55,5 +55,5 @@ for index, row in df.iterrows():
     })
 
 results_df = pd.DataFrame(results)
-print("--- Hasil Evaluasi Rule Engine ---")
+print("--- Rule Engine Evaluation Results ---")
 print(results_df)

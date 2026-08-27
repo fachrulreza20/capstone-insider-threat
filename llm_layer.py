@@ -19,7 +19,7 @@ with open('role_baselines.json') as f:
 def assess_risk_with_llm(user_id, role, timestamp, records_accessed, triggered_rules, base_risk):
     role_info = baselines.get(role, {})
     
-    # Rancang Prompt Berbasis Konteks Bisnis
+    # Build a prompt based on business context
     prompt = f"""
     You are a Cybersecurity Analyst evaluating an internal insider threat alert for a bank.
     
@@ -53,7 +53,7 @@ def assess_risk_with_llm(user_id, role, timestamp, records_accessed, triggered_r
     except Exception as e:
         return {"llm_risk_level": "Error", "explanation": str(e)}
 
-# Pengujian pada 1 sampel log
+# Test on one sample log entry
 if __name__ == "__main__":
     test_result = assess_risk_with_llm(
         user_id="USR002",
@@ -63,5 +63,5 @@ if __name__ == "__main__":
         triggered_rules="Rule 1: Outside Working Hours",
         base_risk="Medium"
     )
-    print("\n=== HASIL EVALUASI LLM LAYER ===")
+    print("\n=== LLM LAYER EVALUATION RESULTS ===")
     print(json.dumps(test_result, indent=2))

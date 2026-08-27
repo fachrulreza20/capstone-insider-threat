@@ -1,0 +1,5 @@
+timestamp,user_id,role,records_accessed,action
+2026-08-25 10:30:00,USR001,Teller,15,customer_account_view
+2026-08-25 21:15:00,USR002,Teller,20,customer_account_view
+2026-08-25 14:00:00,USR003,Customer Service,120,bulk_export
+2026-08-25 22:45:00,USR004,Branch Manager,200,system_audit_download

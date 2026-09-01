@@ -3,45 +3,47 @@ import json
 import pandas as pd
 from dotenv import load_dotenv
 from openai import OpenAI
+from rule_engine import evaluate_log_entry
 
-# 1. Load Environment Variables (API Key)
 load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
-if not api_key:
-    raise ValueError("OPENAI_API_KEY is not set. Add it to your .env file or environment variables.")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-client = OpenAI(api_key=api_key)
-
-# Load Baseline
-with open('role_baselines.json') as f:
-    baselines = json.load(f)
-
-def assess_risk_with_llm(user_id, role, timestamp, records_accessed, triggered_rules, base_risk):
-    role_info = baselines.get(role, {})
-    
-    # Build a prompt based on business context
+def assess_risk_with_llm(log_row, triggered_rules, base_risk):
+    """
+    Evaluates audit log data using OpenAI API (gpt-4o-mini) with business context reasoning.
+    """
     prompt = f"""
     You are a Cybersecurity Analyst evaluating an internal insider threat alert for a bank.
     
-    BUSINESS CONTEXT & BASELINE:
-    - User Role: {role}
-    - Expected Hours: {role_info.get('start_time')} to {role_info.get('end_time')}
-    - Max Allowed Daily Access: {role_info.get('max_daily_records')} records
+    Audit Log Context:
+    - User ID: {log_row['user_id']}
+    - Role: {log_row['role']}
+    - Timestamp: {log_row['timestamp']}
+    - Action Type: {log_row['action_type']}
+    - Records Accessed: {log_row['records_accessed']}
+    - Failed Login Attempts: {log_row['failed_logins']}
+    - Account Sensitivity: {log_row['account_sensitivity']}
+    - Access IP: {log_row['ip_address']} (Saved IP: {log_row['saved_ip']})
     
-    AUDIT EVENT DETAILS:
-    - User ID: {user_id}
-    - Event Time: {timestamp}
-    - Records Accessed: {records_accessed}
+    Deterministic Rule Engine Assessment:
     - Rules Triggered: {triggered_rules}
-    - Initial Rule-Based Risk: {base_risk}
+    - Rule-Engine Initial Risk Assessment: {base_risk}
     
-    TASK:
-    Analyze this incident considering the business context. 
-    Provide your output in JSON format with two keys:
-    1. "llm_risk_level": Must be "Low", "Medium", or "High"
-    2. "explanation": A concise 1-2 sentence justification for your decision.
+    Role Baseline Guidelines:
+    - Expected Working Hours: 09:00 to 17:00
+    - Manager daily download limit: 99 records. Others are strictly prohibited from downloading.
+    
+    Task:
+    Analyze the business context and behavioral patterns. Determine if the initial risk level should be maintained or adjusted (Low, Medium, High).
+    Provide a concise explanation for your decision.
+    
+    Return ONLY a JSON object with this format:
+    {{
+      "llm_risk_level": "Low | Medium | High",
+      "explanation": "<your concise analytical explanation>"
+    }}
     """
-
+    
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -53,15 +55,24 @@ def assess_risk_with_llm(user_id, role, timestamp, records_accessed, triggered_r
     except Exception as e:
         return {"llm_risk_level": "Error", "explanation": str(e)}
 
-# Test on one sample log entry
 if __name__ == "__main__":
-    test_result = assess_risk_with_llm(
-        user_id="USR002",
-        role="Teller",
-        timestamp="2026-08-25 21:15:00",
-        records_accessed=20,
-        triggered_rules="Rule 1: Outside Working Hours",
-        base_risk="Medium"
-    )
-    print("\n=== LLM LAYER EVALUATION RESULTS ===")
-    print(json.dumps(test_result, indent=2))
+    df = pd.read_csv('sample_audit_logs.csv')
+    
+    # Test Evaluation on USR005 (High Risk Case)
+    test_row = df[df['user_id'] == 'USR005'].iloc[0]
+    triggered, risk = evaluate_log_entry(test_row)
+    
+    print("\n" + "="*80)
+    print("                 LLM CONTEXTUAL EVALUATION OUTPUT                        ")
+    print("="*80)
+    print(f"Target User ID        : {test_row['user_id']} ({test_row['role']})")
+    print(f"Triggered Rules Count : {len(triggered)}")
+    print(f"Triggered Rules List  : {'; '.join(triggered)}")
+    print(f"Deterministic Risk    : {risk}")
+    print("-" * 80)
+    
+    result = assess_risk_with_llm(test_row, triggered, risk)
+    
+    print("LLM Evaluation Result :")
+    print(json.dumps(result, indent=4))
+    print("="*80 + "\n")

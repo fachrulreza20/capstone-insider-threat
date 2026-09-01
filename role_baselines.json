@@ -2,16 +2,19 @@
   "Teller": {
     "start_time": "09:00",
     "end_time": "17:00",
-    "max_daily_records": 50
+    "allow_download": false,
+    "max_download_limit": 0
   },
   "Customer Service": {
     "start_time": "09:00",
     "end_time": "17:00",
-    "max_daily_records": 40
+    "allow_download": false,
+    "max_download_limit": 0
   },
   "Branch Manager": {
     "start_time": "09:00",
     "end_time": "17:00",
-    "max_daily_records": 30
+    "allow_download": true,
+    "max_download_limit": 99
   }
 }

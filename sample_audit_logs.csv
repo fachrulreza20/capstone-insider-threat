@@ -1,11 +1,7 @@
-timestamp,user_id,role,records_accessed,action
-2026-08-25 10:30:00,USR001,Teller,15,customer_account_view
-2026-08-25 21:15:00,USR002,Teller,20,customer_account_view
-2026-08-25 14:00:00,USR003,Customer Service,120,bulk_export
-2026-08-25 22:45:00,USR004,Branch Manager,200,system_audit_download
-2026-08-25 09:00:00,USR005,Teller,40,customer_account_view
-2026-08-25 03:30:00,USR006,Teller,80,bulk_export
-2026-08-25 11:45:00,USR007,Customer Service,50,customer_account_view
-2026-08-25 18:30:00,USR008,Customer Service,150,bulk_export
-2026-08-25 08:15:00,USR009,Branch Manager,100,operational_report
-2026-08-25 23:00:00,USR010,Branch Manager,50,system_audit_download
+timestamp,user_id,role,records_accessed,failed_logins,action_type,account_sensitivity,ip_address,saved_ip
+2026-09-01 10:30:00,USR001,Teller,15,0,View,Normal,192.168.1.50,192.168.1.50
+2026-09-01 21:15:00,USR002,Teller,20,0,View,Normal,192.168.1.51,192.168.1.51
+2026-09-01 14:00:00,USR003,Customer Service,45,4,View,Sensitive/VIP,192.168.1.52,192.168.1.52
+2026-09-01 10:00:00,USR004,Branch Manager,120,0,Download,Normal,192.168.1.10,192.168.1.10
+2026-09-01 22:45:00,USR005,Branch Manager,150,5,Download,Sensitive/VIP,203.0.113.195,192.168.1.10
+2026-09-01 11:30:00,USR006,Teller,10,0,View,Sensitive/VIP,192.168.1.55,192.168.1.55

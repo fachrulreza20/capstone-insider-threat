@@ -3,7 +3,7 @@ import sys
 import time
 import pandas as pd
 
-# Tambahkan direktori 'src' ke system path agar import berjalan lancar
+# Add 'src' directory to Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from rule_engine import evaluate_log_entry
@@ -25,7 +25,7 @@ def run_bulk_evaluation():
     
     for idx, row in scenarios_df.iterrows():
         scenario_id = row['scenario_id']
-        print(f"[*] Processing Scenario {scenario_id} ({idx+1}/32)...")
+        print(f"[*] Processing Scenario {scenario_id} ({idx+1}/32) for Role: {row['role']}...")
         
         # Step 1: Run Deterministic Rule Engine
         triggered_rules, deterministic_risk = evaluate_log_entry(row)
@@ -54,16 +54,14 @@ def run_bulk_evaluation():
             "LLM_Explanation": llm_explanation
         })
         
-        time.sleep(0.2)
-        
     total_duration = round(time.time() - total_start_time, 2)
     
     results_df = pd.DataFrame(results)
     results_df.to_csv(output_path, index=False)
     
     print("="*80)
-    print(f"[SUCCESS] Evaluated 32 scenarios in {total_duration} seconds.")
-    print(f"[OUTPUT] Results successfully saved to '{output_path}'.")
+    print(f"[SUCCESS] Evaluated 32 scenarios across all roles in {total_duration} seconds.")
+    print(f"[OUTPUT] Updated results saved to '{output_path}'.")
     print("="*80 + "\n")
 
 if __name__ == "__main__":

@@ -1,20 +1,23 @@
-import pandas as pd
+import os
 import json
+import pandas as pd
 from datetime import datetime
 
-# Load configuration baselines and audit log dataset
-with open('role_baselines.json') as f:
-    baselines = json.load(f)
+# Path acuan folder utama
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+config_path = os.path.join(BASE_DIR, 'config', 'role_baselines.json')
+sample_log_path = os.path.join(BASE_DIR, 'data', 'sample_audit_logs.csv')
 
-df = pd.read_csv('sample_audit_logs.csv')
+# Load baselines
+with open(config_path, 'r') as f:
+    baselines = json.load(f)
 
 def evaluate_log_entry(row):
     """
     Evaluates an individual audit log entry against 5 deterministic security rules.
-    Returns the list of triggered rules and the calculated baseline risk level.
     """
     user_role = row['role']
-    timestamp = datetime.strptime(row['timestamp'], '%Y-%m-%d %H:%M:%S')
+    timestamp = datetime.strptime(str(row['timestamp']), '%Y-%m-%d %H:%M:%S')
     accessed_count = row['records_accessed']
     failed_logins = row['failed_logins']
     action_type = row['action_type']
@@ -36,7 +39,7 @@ def evaluate_log_entry(row):
     if failed_logins > 3:
         rules_triggered.append("Rule 2: Repeated Failed Logins (>3)")
         
-    # Rule 3: Mass Data Download (>99 records for Manager)
+    # Rule 3: Mass Data Download (>99 records for Manager, >0 for others)
     max_download = role_config.get('max_download_limit', 0)
     if action_type == "Download" and accessed_count > max_download:
         rules_triggered.append(f"Rule 3: Mass Data Download (>{max_download} records)")
@@ -49,8 +52,7 @@ def evaluate_log_entry(row):
     if ip_address != saved_ip:
         rules_triggered.append("Rule 5: Unrecognized IP Location")
         
-    # Deterministic Risk Mapping (Rule-Counting Thresholds)
-    # 0-1 rules: Low | 2-3 rules: Medium | 4-5 rules: High
+    # Rule-Counting Risk Mapping (0-1: Low, 2-3: Medium, 4-5: High)
     count = len(rules_triggered)
     if count <= 1:
         base_risk = "Low"
@@ -61,27 +63,17 @@ def evaluate_log_entry(row):
         
     return rules_triggered, base_risk
 
-# Execute Evaluation
 if __name__ == "__main__":
-    results = []
-    for index, row in df.iterrows():
-        triggered, risk = evaluate_log_entry(row)
-        results.append({
-            "User ID": row['user_id'],
-            "Role": row['role'],
-            "Count": len(triggered),
-            "Triggered Rules": "; ".join(triggered) if triggered else "None",
-            "Base Risk": risk
-        })
-
-    results_df = pd.DataFrame(results)
-    
-    # Clean terminal output formatting
-    pd.set_option('display.max_columns', None)
-    pd.set_option('display.width', 1000)
-    
-    print("\n" + "="*80)
-    print("      DETERMINISTIC RULE ENGINE ASSESSMENT RESULTS (5-RULE SYSTEM)      ")
-    print("="*80)
-    print(results_df.to_string(index=False))
-    print("="*80 + "\n")
+    if os.path.exists(sample_log_path):
+        df = pd.read_csv(sample_log_path)
+        results = []
+        for index, row in df.iterrows():
+            triggered, risk = evaluate_log_entry(row)
+            results.append({
+                "User ID": row['user_id'],
+                "Role": row['role'],
+                "Count": len(triggered),
+                "Triggered Rules": "; ".join(triggered) if triggered else "None",
+                "Base Risk": risk
+            })
+        print(pd.DataFrame(results))

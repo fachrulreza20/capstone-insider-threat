@@ -1,0 +1,11 @@
+event_id,timestamp,user_id,event_type,ip_address,customer_id,account_type,action,records_count
+EVT0001,2026-08-27 09:05:00,USR001,login_success,10.0.0.11,,,
+EVT0002,2026-08-27 09:10:00,USR001,record_access,10.0.0.11,CUST001,Regular,view,10
+EVT0003,2026-08-27 10:30:00,USR001,record_access,10.0.0.11,CUST002,Regular,view,5
+EVT0004,2026-08-27 10:00:00,USR002,login_success,10.0.0.12,,,
+EVT0005,2026-08-27 10:30:00,USR002,record_access,10.0.0.12,CUST010,Priority,download,150
+EVT0006,2026-08-27 02:00:00,USR003,login_failed,198.51.100.99,,,
+EVT0007,2026-08-27 02:01:00,USR003,login_failed,198.51.100.99,,,
+EVT0008,2026-08-27 02:02:00,USR003,login_failed,198.51.100.99,,,
+EVT0009,2026-08-27 02:03:00,USR003,login_success,198.51.100.99,,,
+EVT0010,2026-08-27 02:10:00,USR003,record_access,198.51.100.99,CUST020,Pejabat,download,300

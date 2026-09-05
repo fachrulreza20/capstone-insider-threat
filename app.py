@@ -13,22 +13,94 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 from rule_engine import evaluate_log_entry
 from llm_layer import assess_risk_with_llm
 
-# Set Page Config
+# ==============================================================================
+# HELPER FUNCTION: DATA AGGREGATOR (ACCOMMODATES CHRIS'S RAW LOG FORMAT)
+# ==============================================================================
+
+def aggregate_user_logs(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Normalizes column names and aggregates raw audit log entries by user_id.
+    Compatible with Chris's raw_audit_logs.csv format and pre-aggregated formats.
+    """
+    if df.empty:
+        return df
+
+    # 1. Normalize Column Names (Mapping Chris's schema to standard schema)
+    rename_mapping = {
+        'records_count': 'records_accessed',
+        'failed_login_count': 'failed_logins',
+        'sensitivity': 'account_sensitivity',
+        'action': 'action_type'
+    }
+    df = df.rename(columns=rename_mapping)
+
+    # Clean string columns
+    if 'action_type' in df.columns:
+        df['action_type'] = df['action_type'].astype(str).str.title() # e.g. 'download' -> 'Download'
+    if 'account_sensitivity' in df.columns:
+        df['account_sensitivity'] = df['account_sensitivity'].astype(str).str.title()
+
+    # If data is already unique per user or explicitly aggregated, return directly
+    if 'is_aggregated' in df.columns or len(df) == df['user_id'].nunique():
+        return df
+
+    aggregated_results = []
+    group_cols = [c for c in ['scenario_id', 'user_id', 'role'] if c in df.columns]
+    if not group_cols:
+        group_cols = ['user_id'] if 'user_id' in df.columns else df.index
+
+    for _, group in df.groupby(group_cols):
+        # Numeric aggregations
+        total_records = pd.to_numeric(group['records_accessed'], errors='coerce').fillna(0).sum() if 'records_accessed' in group.columns else 0
+        total_failed_logins = pd.to_numeric(group['failed_logins'], errors='coerce').fillna(0).sum() if 'failed_logins' in group.columns else 0
+        
+        # Categorical aggregations
+        has_download = any(group['action_type'].astype(str).str.contains("Download", case=False)) if 'action_type' in group.columns else False
+        action_type = "Download" if has_download else "View"
+        
+        has_vip = any(group['account_sensitivity'].astype(str).str.contains("Sensitive|Vip|High", case=False)) if 'account_sensitivity' in group.columns else False
+        account_sensitivity = "Sensitive/VIP" if has_vip else "Normal"
+        
+        ip_mismatch = any(group['ip_address'] != group['saved_ip']) if ('ip_address' in group.columns and 'saved_ip' in group.columns) else False
+        ip_addr = group['ip_address'].iloc[-1] if 'ip_address' in group.columns else "192.168.1.10"
+        saved_ip = group['saved_ip'].iloc[-1] if 'saved_ip' in group.columns else "192.168.1.10"
+        if ip_mismatch:
+            ip_addr = "203.0.113.50"
+            
+        agg_row = {
+            'scenario_id': group['scenario_id'].iloc[0] if 'scenario_id' in group.columns else 'AGG_LOG',
+            'timestamp': group['timestamp'].iloc[-1] if 'timestamp' in group.columns else '2026-09-01 17:00:00',
+            'user_id': group['user_id'].iloc[0] if 'user_id' in group.columns else 'USR_UNKNOWN',
+            'role': group['role'].iloc[0] if 'role' in group.columns else 'Teller',
+            'records_accessed': int(total_records),
+            'failed_logins': int(total_failed_logins),
+            'action_type': action_type,
+            'account_sensitivity': account_sensitivity,
+            'ip_address': ip_addr,
+            'saved_ip': saved_ip
+        }
+        aggregated_results.append(agg_row)
+        
+    return pd.DataFrame(aggregated_results)
+
+# ==============================================================================
+# STREAMLIT APPLICATION CONFIGURATION
+# ==============================================================================
 st.set_page_config(
     page_title="Insider Threat Detection System",
     page_icon="🛡️",
     layout="wide"
 )
 
-# Page Title & Header
+# Page Title & Main Description
 st.title("🛡️ Insider Threat Detection Dashboard")
 st.markdown("This system evaluates employee activity logs for potential insider threats, providing both baseline risk detection and nuanced business context reasoning using a hybrid model (5-Rule Deterministic Engine + LLM Layer).")
 
 # Tab Navigation (3 Tabs)
 tab1, tab2, tab3 = st.tabs([
-    "#1 🎯 Live Single Detection Demo", 
-    "#2 📊 32-Scenario Evaluation Analytics",
-    "#3 📁 Upload & Analyze Audit Logs"
+    "🎯 Live Single Detection Demo", 
+    "📊 32-Scenario Evaluation Analytics",
+    "📁 Upload & Analyze Audit Logs"
 ])
 
 # ==============================================================================
@@ -151,7 +223,7 @@ with tab2:
         
         st.divider()
         
-        # 2. Detailed Scenario Dataset Table (DIATAS)
+        # 2. Detailed Scenario Dataset Table (TOP)
         st.markdown("### 📑 Detailed Scenario Dataset")
         st.dataframe(
             df_results,
@@ -175,7 +247,7 @@ with tab2:
         
         st.divider()
         
-        # 3. Visual Analytics Charts (DIBAWAH)
+        # 3. Visual Analytics Charts (BOTTOM)
         st.markdown("### 📊 Evaluation Visual Analytics")
         fig_web, axes = plt.subplots(1, 2, figsize=(12, 4.5))
         sns.set_theme(style="whitegrid")
@@ -209,7 +281,7 @@ with tab3:
     st.info("""
     **📁 Objective & Purpose:** 
     Batch processing portal that allows security analysts to **upload custom audit log CSV files and execute risk evaluations**. 
-    It provides flexibility to compare fast, low-cost **Deterministic Baseline Analysis** against full **LLM-assisted Contextual Assessment**.
+    It automatically detects and aggregates multi-event logs per user (handling un-aggregated transaction logs) and provides options for Rule Engine only or full LLM-assisted assessment.
     """)
     
     # Download Sample Data Section
@@ -228,10 +300,17 @@ with tab3:
     
     if uploaded_file is not None:
         try:
-            uploaded_df = pd.read_csv(uploaded_file)
-            st.success(f"Successfully loaded `{uploaded_file.name}` with {len(uploaded_df)} log entries.")
+            raw_df = pd.read_csv(uploaded_file)
             
-            st.markdown("### 📑 Preview Uploaded Data")
+            # Automatically aggregate logs per user if raw transactions are uploaded
+            uploaded_df = aggregate_user_logs(raw_df)
+            
+            if len(raw_df) != len(uploaded_df):
+                st.success(f"Successfully loaded `{uploaded_file.name}`! Auto-aggregated {len(raw_df)} raw entries into {len(uploaded_df)} user activity summaries.")
+            else:
+                st.success(f"Successfully loaded `{uploaded_file.name}` with {len(uploaded_df)} log summaries.")
+            
+            st.markdown("### 📑 Preview Processed Data (Ready for Analysis)")
             st.dataframe(uploaded_df.head(5), use_container_width=True)
             
             st.divider()
@@ -239,7 +318,6 @@ with tab3:
             # Action Buttons Row
             btn_col1, btn_col2 = st.columns(2)
             
-            # Initialize Session State Dataframe for Upload Results
             if "processed_upload_df" not in st.session_state:
                 st.session_state.processed_upload_df = None
 
@@ -249,9 +327,7 @@ with tab3:
             with btn_col2:
                 run_llm_analysis = st.button("🤖 Analyze via LLM Contextual Assessment (OpenAI API)", use_container_width=True, type="primary")
 
-            # ----------------------------------------------------
             # Execution: Rule Engine Only
-            # ----------------------------------------------------
             if run_rule_only:
                 results = []
                 for idx, row in uploaded_df.iterrows():
@@ -266,9 +342,7 @@ with tab3:
                 st.session_state.processed_upload_df = pd.DataFrame(results)
                 st.success("Rule Engine evaluation completed!")
 
-            # ----------------------------------------------------
             # Execution: Rule Engine + LLM Layer
-            # ----------------------------------------------------
             if run_llm_analysis:
                 results = []
                 progress_bar = st.progress(0)
@@ -304,9 +378,7 @@ with tab3:
                 st.session_state.processed_upload_df = pd.DataFrame(results)
                 st.success("Full Hybrid (Rule Engine + LLM) evaluation completed!")
 
-            # ----------------------------------------------------
             # Display Results Table
-            # ----------------------------------------------------
             if st.session_state.processed_upload_df is not None:
                 st.markdown("### 🔍 Analysis Results")
                 
@@ -318,7 +390,6 @@ with tab3:
                     "Deterministic_Risk": st.column_config.TextColumn("Base Risk", width="small"),
                 }
                 
-                # Dynamically include LLM columns if present
                 if "LLM_Risk" in st.session_state.processed_upload_df.columns:
                     cols_config["LLM_Risk"] = st.column_config.TextColumn("LLM Risk", width="small")
                     cols_config["Override_Status"] = st.column_config.TextColumn("Override Status", width="medium")

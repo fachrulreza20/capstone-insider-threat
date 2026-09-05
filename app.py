@@ -16,7 +16,6 @@ from llm_layer import assess_risk_with_llm
 # ==============================================================================
 # HELPER FUNCTION: DATA AGGREGATOR (ACCOMMODATES CHRIS'S RAW LOG FORMAT)
 # ==============================================================================
-
 def aggregate_user_logs(df: pd.DataFrame) -> pd.DataFrame:
     """
     Normalizes column names and aggregates raw audit log entries by user_id.
@@ -36,7 +35,7 @@ def aggregate_user_logs(df: pd.DataFrame) -> pd.DataFrame:
 
     # Clean string columns
     if 'action_type' in df.columns:
-        df['action_type'] = df['action_type'].astype(str).str.title() # e.g. 'download' -> 'Download'
+        df['action_type'] = df['action_type'].astype(str).str.title()
     if 'account_sensitivity' in df.columns:
         df['account_sensitivity'] = df['account_sensitivity'].astype(str).str.title()
 
@@ -50,11 +49,9 @@ def aggregate_user_logs(df: pd.DataFrame) -> pd.DataFrame:
         group_cols = ['user_id'] if 'user_id' in df.columns else df.index
 
     for _, group in df.groupby(group_cols):
-        # Numeric aggregations
         total_records = pd.to_numeric(group['records_accessed'], errors='coerce').fillna(0).sum() if 'records_accessed' in group.columns else 0
         total_failed_logins = pd.to_numeric(group['failed_logins'], errors='coerce').fillna(0).sum() if 'failed_logins' in group.columns else 0
         
-        # Categorical aggregations
         has_download = any(group['action_type'].astype(str).str.contains("Download", case=False)) if 'action_type' in group.columns else False
         action_type = "Download" if has_download else "View"
         
@@ -83,6 +80,7 @@ def aggregate_user_logs(df: pd.DataFrame) -> pd.DataFrame:
         
     return pd.DataFrame(aggregated_results)
 
+
 # ==============================================================================
 # STREAMLIT APPLICATION CONFIGURATION
 # ==============================================================================
@@ -96,11 +94,11 @@ st.set_page_config(
 st.title("🛡️ Insider Threat Detection Dashboard")
 st.markdown("This system evaluates employee activity logs for potential insider threats, providing both baseline risk detection and nuanced business context reasoning using a hybrid model (5-Rule Deterministic Engine + LLM Layer).")
 
-# Tab Navigation (3 Tabs)
+# Tab Navigation
 tab1, tab2, tab3 = st.tabs([
-    "🎯 Live Single Detection Demo", 
-    "📊 32-Scenario Evaluation Analytics",
-    "📁 Upload & Analyze Audit Logs"
+    "#1 🎯 Live Single Detection Demo", 
+    "#2 📊 32-Scenario Evaluation Analytics",
+    "#3 📁 Upload & Analyze Audit Logs"
 ])
 
 # ==============================================================================
@@ -284,18 +282,39 @@ with tab3:
     It automatically detects and aggregates multi-event logs per user (handling un-aggregated transaction logs) and provides options for Rule Engine only or full LLM-assisted assessment.
     """)
     
-    # Download Sample Data Section
-    sample_csv_path = os.path.join(os.path.dirname(__file__), 'data', 'all_32_scenarios.csv')
-    if os.path.exists(sample_csv_path):
-        with open(sample_csv_path, "rb") as file:
-            st.download_button(
-                label="📥 Download Sample Audit Log Template (.csv)",
-                data=file,
-                file_name="sample_audit_log_template.csv",
-                mime="text/csv",
-                help="Click to download a pre-formatted sample CSV file to see expected columns and data structure."
-            )
+    # Download Sample Data Section (Side-by-Side Buttons)
+    sample_col1, sample_col2 = st.columns(2)
     
+    # 1. Tombol Download Contoh Raw Data (Versi Chris)
+    raw_csv_path = os.path.join(os.path.dirname(__file__), 'data', 'raw_audit_logs.csv')
+    with sample_col1:
+        if os.path.exists(raw_csv_path):
+            with open(raw_csv_path, "rb") as file:
+                st.download_button(
+                    label="📥 Download Contoh Raw Audit Data (.csv)",
+                    data=file,
+                    file_name="contoh_raw_audit_logs.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                    help="Klik untuk mengunduh sampel data audit mentah per transaksi (belum diagregasi)."
+                )
+    
+    # 2. Tombol Download Contoh Audited / Aggregated Log Data
+    sample_csv_path = os.path.join(os.path.dirname(__file__), 'data', 'all_32_scenarios.csv')
+    with sample_col2:
+        if os.path.exists(sample_csv_path):
+            with open(sample_csv_path, "rb") as file:
+                st.download_button(
+                    label="📥 Download Contoh Audited Log Data (.csv)",
+                    data=file,
+                    file_name="contoh_audited_log_data.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                    help="Klik untuk mengunduh sampel data audit log ringkasan yang sudah diagregasi per user."
+                )
+    
+    st.divider()
+
     uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"])
     
     if uploaded_file is not None:
@@ -405,4 +424,4 @@ with tab3:
         except Exception as e:
             st.error(f"Error processing CSV file: {str(e)}")
     else:
-        st.info("Please upload a `.csv` audit log file (or download and test with the sample template above) to begin analysis.")
+        st.info("Please upload a `.csv` audit log file (or download and test with the sample templates above) to begin analysis.")

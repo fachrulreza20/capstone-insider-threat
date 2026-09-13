@@ -1,0 +1,43 @@
+{
+  "experiment_id": "exp02_subtle",
+  "description": "Evaluation using subtle synthetic behavioural anomalies.",
+  "model_type": "Role-specific Isolation Forest",
+  "roles": [
+    "Teller",
+    "CustomerService",
+    "Manager"
+  ],
+  "training_data": {
+    "type": "Normal synthetic employee activity only",
+    "training_users": 100,
+    "training_user_days": 1500
+  },
+  "threshold_calibration": {
+    "method": "5th percentile of unseen normal validation anomaly scores",
+    "Teller": -0.0783,
+    "CustomerService": -0.0720,
+    "Manager": -0.0616
+  },
+  "test_data": {
+    "total_cases": 225,
+    "normal_cases": 180,
+    "anomaly_cases": 45
+  },
+  "anomaly_scenarios": [
+    "gradual_download_increase",
+    "repeated_vip_access",
+    "role_deviation",
+    "slow_behavioral_drift",
+    "unusual_volume_normal_hours"
+  ],
+  "results": {
+    "true_negative": 169,
+    "false_positive": 11,
+    "false_negative": 18,
+    "true_positive": 27,
+    "accuracy": 0.8711,
+    "precision": 0.7105,
+    "recall": 0.6,
+    "f1_score": 0.6506
+  }
+}

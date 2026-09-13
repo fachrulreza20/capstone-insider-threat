@@ -1,0 +1,130 @@
+import sys
+import json
+import joblib
+import pandas as pd
+
+
+if len(sys.argv) != 2:
+    raise ValueError(
+        "Usage: python -m src.ML.evaluation.predict_experiment <experiment_name>"
+    )
+
+experiment_name = sys.argv[1]
+
+FEATURE_FILE = (
+    f"DATA_ML/experiments/{experiment_name}/features.csv"
+)
+
+OUTPUT_FILE = (
+    f"DATA_ML/experiments/{experiment_name}/predictions.csv"
+)
+
+FEATURE_COLUMNS = [
+    "event_count",
+    "failed_login_count",
+    "download_total",
+    "records_accessed_total",
+    "vip_access_count",
+    "unknown_ip_count",
+    "outside_hours_count",
+    "unique_ip_count",
+    "first_activity_hour",
+    "last_activity_hour",
+]
+
+
+print("Experiment:", experiment_name)
+print("Loading features...")
+
+df = pd.read_csv(FEATURE_FILE)
+
+
+with open(
+    "MODELS/calibration/role_thresholds.json",
+    "r"
+) as file:
+
+    thresholds = json.load(file)
+
+
+prediction_results = []
+
+
+for role in [
+    "Teller",
+    "CustomerService",
+    "Manager"
+]:
+
+    print("\n" + "=" * 60)
+    print("PREDICTING ROLE:", role)
+    print("=" * 60)
+
+    role_df = df[
+        df["role"] == role
+    ].copy()
+
+    model = joblib.load(
+        f"MODELS/role_specific/{role}_isolation_forest.pkl"
+    )
+
+    scaler = joblib.load(
+        f"MODELS/role_specific/{role}_scaler.pkl"
+    )
+
+    X = role_df[FEATURE_COLUMNS]
+
+    X_scaled = scaler.transform(X)
+
+    role_df["anomaly_score"] = (
+        model.decision_function(X_scaled)
+    )
+
+    threshold = thresholds[role]
+
+    role_df["prediction"] = (
+        role_df["anomaly_score"] < threshold
+    ).astype(int)
+
+    role_df["threshold"] = threshold
+
+    print("Rows:", len(role_df))
+    print(
+        "Predicted NORMAL:",
+        (role_df["prediction"] == 0).sum()
+    )
+
+    print(
+        "Predicted ANOMALY:",
+        (role_df["prediction"] == 1).sum()
+    )
+
+    prediction_results.append(role_df)
+
+
+result = pd.concat(
+    prediction_results,
+    ignore_index=True
+)
+
+result.to_csv(
+    OUTPUT_FILE,
+    index=False
+)
+
+print("\n" + "=" * 60)
+print("PREDICTION COMPLETED")
+print("=" * 60)
+
+print("\nTotal predictions:", len(result))
+
+print(
+    "\nPredicted class distribution:"
+)
+
+print(
+    result["prediction"].value_counts()
+)
+
+print("\nSaved to:")
+print(OUTPUT_FILE)

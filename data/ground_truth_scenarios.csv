@@ -1,0 +1,18 @@
+scenario_id,r1_outside_hours,r2_failed_logins,r3_mass_download,r4_vip_access,r5_foreign_ip,triggered_count,baseline_rule_risk,ground_truth_risk,description
+SCN01,False,False,False,False,False,0,Low,Low,Standard baseline working activity.
+SCN02,True,False,False,False,False,1,Low,Low,After-hours view with no data exfiltration.
+SCN03,False,True,False,False,False,1,Low,Low,Minor login typo during business hours.
+SCN04,True,True,False,False,False,2,Medium,Low,After-hours failed login (likely forgotten password).
+SCN05,False,False,True,False,False,1,Low,Medium,Mass download during normal hours by non-manager.
+SCN06,False,False,False,True,False,1,Low,Low,Routine VIP account lookup by authorized role.
+SCN07,False,False,False,False,True,1,Low,Low,Login via new VPN/Remote IP address during work hours.
+SCN08,True,False,True,False,False,2,Medium,Medium,After-hours mass download.
+SCN09,True,False,False,True,False,2,Medium,Medium,After-hours VIP access.
+SCN10,False,True,True,False,False,2,Medium,Medium,Brute force attempt followed by data download.
+SCN11,False,False,True,True,False,2,Medium,High,Mass download of VIP customer records.
+SCN12,False,False,False,True,True,2,Medium,Medium,VIP access from unrecognized foreign location.
+SCN13,True,True,True,False,False,3,Medium,High,After-hours brute force and mass download.
+SCN14,True,False,True,True,False,3,Medium,High,After-hours exfiltration of VIP records.
+SCN15,False,True,True,True,False,3,Medium,High,Brute force attack followed by VIP data exfiltration.
+SCN16,True,True,True,True,False,4,High,High,Multi-vector internal abuse (Hours + Logins + Download + VIP).
+SCN17,True,True,True,True,True,5,High,High,Full 5-rule escalation trigger (Compromised / Malicious).

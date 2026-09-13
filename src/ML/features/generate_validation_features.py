@@ -1,11 +1,10 @@
 import pandas as pd
 
-from src.ML.feature_engineering import create_user_day_features
+from src.ML.features.feature_engineering import create_user_day_features
 
 
-INPUT_FILE = "DATA_ML/normal_validation.csv"
-OUTPUT_FILE = "DATA_ML/normal_validation_features.csv"
-
+INPUT_FILE = "DATA_ML/validation/normal_validation.csv"
+OUTPUT_FILE = "DATA_ML/validation/normal_validation_features.csv"
 
 print("Loading NORMAL validation raw logs...")
 

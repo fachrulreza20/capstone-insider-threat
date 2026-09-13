@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 # 1. Configuration
 # --------------------------------------------------
 
-INPUT_FILE = "DATA_ML/normal_train_features.csv"
+INPUT_FILE = "DATA_ML/training/normal_train_features.csv"
 
 FEATURE_COLUMNS = [
     "event_count",
@@ -51,7 +51,7 @@ print(df["role"].value_counts())
 # 3. Prepare output folders
 # --------------------------------------------------
 
-os.makedirs("MODELS", exist_ok=True)
+os.makedirs("MODELS/role_specific", exist_ok=True)
 
 all_results = []
 
@@ -120,11 +120,11 @@ for role in ROLES:
     safe_role_name = role.replace(" ", "_")
 
     model_file = (
-        f"MODELS/{safe_role_name}_isolation_forest.pkl"
+        f"MODELS/role_specific/{safe_role_name}_isolation_forest.pkl"
     )
 
     scaler_file = (
-        f"MODELS/{safe_role_name}_scaler.pkl"
+        f"MODELS/role_specific/{safe_role_name}_scaler.pkl"
     )
 
     joblib.dump(model, model_file)
@@ -169,7 +169,7 @@ combined_results = pd.concat(
 )
 
 combined_results.to_csv(
-    "DATA_ML/role_specific_training_results.csv",
+    "DATA_ML/training/role_specific_training_results.csv",
     index=False
 )
 

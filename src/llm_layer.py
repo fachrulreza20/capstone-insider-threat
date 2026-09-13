@@ -1,74 +1,63 @@
-import os
 import json
-from openai import OpenAI
+import os
+import openai
 
-def get_openai_client():
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+def analyze_user_timeline_with_llm(user_id: str, role: str, timeline_text: str, baseline_rules: str, baseline_risk: str) -> dict:
     """
-    Safely retrieves the OpenAI API key from environment variables or Streamlit Secrets.
+    LLM Contextual Analysis: Membaca kronologi log mentah untuk menganalisis
+    pola perilaku, kesesuaian peran, dan memberikan penjelasan berbasis bukti.
     """
-    # 1. Try fetching from Streamlit secrets (for Streamlit Cloud)
-    try:
-        import streamlit as st
-        if "OPENAI_API_KEY" in st.secrets:
-            return OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-    except Exception:
-        pass
+    system_prompt = """
+    You are an expert Security Operations Center (SOC) Analyst assisting in Insider Threat Hunting.
+    Your objective is to evaluate chronological User Activity Timelines to detect suspicious behavioral patterns.
 
-    # 2. Try fetching from local .env environment variable
-    api_key = os.getenv("OPENAI_API_KEY")
-    if api_key:
-        return OpenAI(api_key=api_key)
+    Key Evaluation Guidelines:
+    1. Sequence & Temporal Analysis: Check if actions follow a suspicious sequence (e.g., failed logins followed by VIP access or unusual data volume).
+    2. Role Context: Evaluate if the accessed data and activity volume align with the user's operational role.
+    3. Outcome Distinction: Differentiate between potential compromised credentials vs. suspicious insider activity.
 
-    return None
+    Important Framing Rules:
+    - Do NOT state that a user has "malicious intent" or is a "bad person".
+    - Frame findings as "Suspicious User / High-Risk Behavior Pattern" or "Consistent with Routine Activity".
 
-def assess_risk_with_llm(log_entry, triggered_rules_str, deterministic_risk):
+    Return ONLY a valid JSON object with the following structure:
+    {
+      "llm_risk_level": "Low" | "Medium" | "High",
+      "detected_pattern": "Short description of detected pattern (e.g., After-Hours Multi-Vector Access)",
+      "explanation": "Concise step-by-step reasoning citing specific timeline evidence."
+    }
     """
-    Evaluates business context using OpenAI gpt-4o-mini model.
-    """
-    client = get_openai_client()
-    
-    if not client:
-        return {
-            "llm_risk_level": deterministic_risk,
-            "explanation": "OpenAI API Key is missing. Please configure OPENAI_API_KEY in Streamlit Secrets or .env file."
-        }
-
-    # Construct System Prompt
-    system_prompt = (
-        "You are an expert Cybersecurity SOC Analyst evaluating insider threats in a bank. "
-        "Analyze the provided user log and deterministic rule triggers. "
-        "Determine if the baseline risk should be maintained or escalated/overridden based on business context. "
-        "Return ONLY a JSON object with keys: 'llm_risk_level' (Low, Medium, High) and 'explanation' (2-3 clear sentences)."
-    )
 
     user_prompt = f"""
-    Employee Log:
-    - User ID: {log_entry['user_id']}
-    - Role: {log_entry['role']}
-    - Time: {log_entry['timestamp']}
-    - Action: {log_entry['action_type']} ({log_entry['records_accessed']} records)
-    - Failed Logins: {log_entry['failed_logins']}
-    - Account Sensitivity: {log_entry['account_sensitivity']}
-    - IP Match: {'Yes' if log_entry['ip_address'] == log_entry['saved_ip'] else 'No'}
+    Please evaluate the following user activity profile:
 
-    Deterministic Layer Output:
-    - Triggered Rules: {triggered_rules_str}
-    - Baseline Risk: {deterministic_risk}
+    - User ID: {user_id}
+    - Role: {role}
+    - Rule-based Baseline Output: {baseline_risk} (Triggered Rules: {baseline_rules})
+
+    User Activity Timeline (Chronological Audit Logs):
+    {timeline_text}
+
+    Analyze the timeline sequence and provide your contextual assessment in JSON format.
     """
 
     try:
-        response = client.chat.completions.create(
+        response = openai.chat.completions.create(
             model="gpt-4o-mini",
-            response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
+            response_format={"type": "json_object"},
             temperature=0.2
         )
         return json.loads(response.choices[0].message.content)
+
     except Exception as e:
         return {
-            "llm_risk_level": deterministic_risk,
-            "explanation": f"API Error encountered: {str(e)}"
+            "llm_risk_level": baseline_risk,
+            "detected_pattern": "API Error / Processing Failure",
+            "explanation": f"Failed to perform LLM analysis: {str(e)}"
         }

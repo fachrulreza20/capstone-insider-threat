@@ -1,10 +1,11 @@
 import pandas as pd
 
-from src.ML.feature_engineering import create_user_day_features
+from src.ML.features.feature_engineering import create_user_day_features
 
 
 # 1. Load normal raw training logs
-input_file = "DATA_ML/normal_train_large.csv"
+input_file = "DATA_ML/training/normal_train_large.csv"
+
 
 print("Loading raw training data...")
 
@@ -27,7 +28,7 @@ features = features.sort_values(
 
 
 # 4. Save the resulting feature dataset
-output_file = "DATA_ML/normal_train_features.csv"
+output_file = "DATA_ML/training/normal_train_features.csv"
 
 features.to_csv(
     output_file,

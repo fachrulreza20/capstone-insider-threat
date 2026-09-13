@@ -3,7 +3,7 @@ import joblib
 import pandas as pd
 
 
-FEATURE_FILE = "DATA_ML/test_features.csv"
+FEATURE_FILE = "DATA_ML/experiments/exp01_obvious/features.csv"
 
 FEATURE_COLUMNS = [
     "event_count",
@@ -25,7 +25,7 @@ df = pd.read_csv(FEATURE_FILE)
 
 
 with open(
-    "MODELS/role_thresholds.json",
+    "MODELS/calibration/role_thresholds.json",
     "r"
 ) as file:
 
@@ -50,11 +50,11 @@ for role in [
     ].copy()
 
     model = joblib.load(
-        f"MODELS/{role}_isolation_forest.pkl"
+    f"MODELS/role_specific/{role}_isolation_forest.pkl"
     )
 
     scaler = joblib.load(
-        f"MODELS/{role}_scaler.pkl"
+        f"MODELS/role_specific/{role}_scaler.pkl"
     )
 
     X = role_df[FEATURE_COLUMNS]
@@ -93,7 +93,7 @@ result = pd.concat(
 )
 
 result.to_csv(
-    "DATA_ML/test_predictions.csv",
+    "DATA_ML/experiments/exp01_obvious/predictions.csv",
     index=False
 )
 

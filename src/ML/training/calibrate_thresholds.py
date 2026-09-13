@@ -4,7 +4,7 @@ import joblib
 import pandas as pd
 
 
-INPUT_FILE = "DATA_ML/normal_validation_features.csv"
+INPUT_FILE = "DATA_ML/validation/normal_validation_features.csv"
 
 FEATURE_COLUMNS = [
     "event_count",
@@ -49,8 +49,9 @@ for role in ROLES:
     print("Validation rows:", len(role_df))
     print("Unique users:", role_df["user_id"].nunique())
 
-    model_file = f"MODELS/{role}_isolation_forest.pkl"
-    scaler_file = f"MODELS/{role}_scaler.pkl"
+
+    model_file = f"MODELS/role_specific/{role}_isolation_forest.pkl"
+    scaler_file = f"MODELS/role_specific/{role}_scaler.pkl"
 
     model = joblib.load(model_file)
     scaler = joblib.load(scaler_file)
@@ -113,10 +114,10 @@ for role in ROLES:
 # Save thresholds
 # ----------------------------------------------
 
-os.makedirs("MODELS", exist_ok=True)
+os.makedirs("MODELS/calibration", exist_ok=True)
 
 with open(
-    "MODELS/role_thresholds.json",
+    "MODELS/calibration/role_thresholds.json",
     "w"
 ) as file:
 
@@ -137,7 +138,7 @@ validation_results = pd.concat(
 )
 
 validation_results.to_csv(
-    "DATA_ML/validation_results.csv",
+    "DATA_ML/validation/validation_results.csv",
     index=False
 )
 

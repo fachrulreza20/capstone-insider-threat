@@ -1,0 +1,40 @@
+{
+  "experiment_id": "exp01_obvious",
+  "description": "Initial baseline experiment using obvious synthetic anomalies.",
+  "model_type": "Role-specific Isolation Forest",
+  "roles": [
+    "Teller",
+    "CustomerService",
+    "Manager"
+  ],
+  "training_data": {
+    "type": "Normal synthetic employee activity only",
+    "training_users": 100,
+    "training_user_days": 1500
+  },
+  "threshold_calibration": {
+    "method": "5th percentile of unseen normal validation anomaly scores",
+    "Teller": -0.0783,
+    "CustomerService": -0.0720,
+    "Manager": -0.0616
+  },
+  "test_data": {
+    "normal_cases": 150,
+    "anomaly_cases": 15
+  },
+  "anomaly_scenarios": [
+    "after_hours_exfiltration",
+    "credential_compromise",
+    "vip_mass_download"
+  ],
+  "results": {
+    "true_negative": 139,
+    "false_positive": 11,
+    "false_negative": 0,
+    "true_positive": 15,
+    "accuracy": 0.9333,
+    "precision": 0.5769,
+    "recall": 1.0,
+    "f1_score": 0.7317
+  }
+}

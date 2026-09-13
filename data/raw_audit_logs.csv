@@ -1,11 +1,12 @@
-event_id,timestamp,user_id,event_type,ip_address,customer_id,account_type,action,records_count
-EVT0001,2026-08-27 09:05:00,USR001,login_success,10.0.0.11,,,
-EVT0002,2026-08-27 09:10:00,USR001,record_access,10.0.0.11,CUST001,Regular,view,10
-EVT0003,2026-08-27 10:30:00,USR001,record_access,10.0.0.11,CUST002,Regular,view,5
-EVT0004,2026-08-27 10:00:00,USR002,login_success,10.0.0.12,,,
-EVT0005,2026-08-27 10:30:00,USR002,record_access,10.0.0.12,CUST010,Priority,download,150
-EVT0006,2026-08-27 02:00:00,USR003,login_failed,198.51.100.99,,,
-EVT0007,2026-08-27 02:01:00,USR003,login_failed,198.51.100.99,,,
-EVT0008,2026-08-27 02:02:00,USR003,login_failed,198.51.100.99,,,
-EVT0009,2026-08-27 02:03:00,USR003,login_success,198.51.100.99,,,
-EVT0010,2026-08-27 02:10:00,USR003,record_access,198.51.100.99,CUST020,Pejabat,download,300
+timestamp,user_id,role,action_type,records_accessed,failed_logins,account_sensitivity,ip_address,saved_ip,is_after_hours
+2026-09-01 08:30:00,USR001,Teller,View,5,0,Normal,192.168.1.10,192.168.1.10,False
+2026-09-01 11:15:00,USR001,Teller,View,10,0,Normal,192.168.1.10,192.168.1.10,False
+2026-09-01 14:00:00,USR001,Teller,Download,12,0,Normal,192.168.1.10,192.168.1.10,False
+2026-09-01 20:45:00,USR001,Teller,Download,150,4,Sensitive/VIP,203.0.113.50,192.168.1.10,True
+2026-09-01 09:00:00,USR002,Customer Service,View,15,0,Normal,192.168.1.12,192.168.1.12,False
+2026-09-01 13:20:00,USR002,Customer Service,Download,20,0,Normal,192.168.1.12,192.168.1.12,False
+2026-09-01 16:50:00,USR002,Customer Service,View,8,0,Normal,192.168.1.12,192.168.1.12,False
+2026-09-01 22:10:00,USR003,Manager,View,30,0,Sensitive/VIP,192.168.1.15,192.168.1.15,True
+2026-09-01 22:30:00,USR003,Manager,Download,200,0,Sensitive/VIP,192.168.1.15,192.168.1.15,True
+2026-09-01 03:15:00,USR004,IT Admin,View,0,5,Normal,198.51.100.22,192.168.1.20,True
+2026-09-01 03:20:00,USR004,IT Admin,Download,500,0,Sensitive/VIP,198.51.100.22,192.168.1.20,True

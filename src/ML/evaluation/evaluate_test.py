@@ -10,8 +10,8 @@ from sklearn.metrics import (
 )
 
 
-PREDICTION_FILE = "DATA_ML/test_predictions.csv"
-GROUND_TRUTH_FILE = "DATA_ML/test_ground_truth.csv"
+PREDICTION_FILE = "DATA_ML/experiments/exp01_obvious/predictions.csv"
+GROUND_TRUTH_FILE = "DATA_ML/experiments/exp01_obvious/ground_truth.csv"
 
 
 print("Loading predictions and ground truth...")
@@ -127,11 +127,11 @@ print(
 
 
 result.to_csv(
-    "DATA_ML/test_evaluation_results.csv",
+    "DATA_ML/experiments/exp01_obvious/evaluation_results.csv",
     index=False
 )
 
 print("\nDetailed results saved to:")
 print(
-    "DATA_ML/test_evaluation_results.csv"
+    "DATA_ML/experiments/exp01_obvious/evaluation_results.csv"
 )

@@ -1,10 +1,10 @@
 import pandas as pd
 
-from src.ML.feature_engineering import create_user_day_features
+from src.ML.features.feature_engineering import create_user_day_features
 
 
-INPUT_FILE = "DATA_ML/test_raw_logs.csv"
-OUTPUT_FILE = "DATA_ML/test_features.csv"
+INPUT_FILE = "DATA_ML/experiments/exp01_obvious/raw_logs.csv"
+OUTPUT_FILE = "DATA_ML/experiments/exp01_obvious/test_features.csv"
 
 
 print("Loading test raw logs...")

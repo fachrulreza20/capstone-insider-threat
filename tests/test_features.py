@@ -1,5 +1,5 @@
 import pandas as pd
-from src.ML.feature_engineering import create_user_day_features
+from ML.features.feature_engineering import create_user_day_features
 
 df = pd.read_csv("DATA_ML/normal_train.csv")
 

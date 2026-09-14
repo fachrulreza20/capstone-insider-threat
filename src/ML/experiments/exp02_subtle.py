@@ -1,10 +1,33 @@
+import sys
+import os 
+
 import pandas as pd
 import random
+
 from datetime import datetime, timedelta
 
-random.seed(2027)
+# random.seed(2027)
+# OUTPUT_DIR = "DATA_ML/experiments/exp02_subtle"
 
-OUTPUT_DIR = "DATA_ML/experiments/exp02_subtle"
+if len(sys.argv) != 3:
+    raise ValueError(
+        "Usage: python -m src.ML.experiments.exp02_subtle "
+        "<experiment_name> <seed>"
+    )
+
+experiment_name = sys.argv[1]
+seed = int(sys.argv[2])
+
+random.seed(seed)
+
+OUTPUT_DIR = f"DATA_ML/experiments/{experiment_name}"
+
+os.makedirs(
+    OUTPUT_DIR,
+    exist_ok=True
+)
+
+
 
 rows = []
 ground_truth = []
@@ -426,3 +449,6 @@ print(
 print("\nSaved:")
 print(f"{OUTPUT_DIR}/raw_logs.csv")
 print(f"{OUTPUT_DIR}/ground_truth.csv")
+
+print("Experiment:", experiment_name)
+print("Random seed:", seed)
